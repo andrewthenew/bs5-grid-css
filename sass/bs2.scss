@@ -1,134 +1,119 @@
-// Grid variables
-$grid-columns: 24;
-$grid-gutter-width: 1.5rem;
-$grid-breakpoints: (
-  xs: 0,
-  sm: 576px,
-  md: 768px,
-  lg: 992px,
-  xl: 1200px,
-  xxl: 1400px
-);
-$container-max-widths: (
-  sm: 540px,
-  md: 720px,
-  lg: 960px,
-  xl: 1140px,
-  xxl: 1320px
-);
+@use "sass:map";
+@use "sass:math";
+@use "vars";
 
 // Breakpoint mixer
-@mixin breakpoint-up($name, $breakpoints: $grid-breakpoints) {
-  $min: map-get($breakpoints, $name);
-  @if $min {
-    @media (min-width: $min) {
-      @content;
+@mixin breakpoint-up($name, $breakpoints: vars.$grid-breakpoints) {
+    $min: map.get($breakpoints, $name);
+    @if $min {
+        @media (min-width: $min) {
+            @content;
+        }
+    } @else {
+        @content;
     }
-  } @else {
-    @content;
-  }
 }
 
 // Grid mixins
-@mixin make-container($gutter: $grid-gutter-width) {
-  width: 100%;
-  padding-right: $gutter / 2;
-  padding-left: $gutter / 2;
-  margin-right: auto;
-  margin-left: auto;
+@mixin make-container($gutter: vars.$grid-gutter-width) {
+    width: 100%;
+    padding-right: calc(#{$gutter} / 2);
+    padding-left: calc(#{$gutter} / 2);
+    margin-right: auto;
+    margin-left: auto;
 }
 
-@mixin make-row($gutter: $grid-gutter-width) {
-  display: flex;
-  flex-wrap: wrap;
-  margin-right: -$gutter / 2;
-  margin-left: -$gutter / 2;
+@mixin make-row($gutter: vars.$grid-gutter-width) {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: calc(-1 * #{$gutter} / 2);
+    margin-left: calc(-1 * #{$gutter} / 2);
 }
 
-@mixin make-col-ready($gutter: $grid-gutter-width) {
-  position: relative;
-  width: 100%;
-  padding-right: $gutter / 2;
-  padding-left: $gutter / 2;
+@mixin make-col-ready($gutter: vars.$grid-gutter-width) {
+    position: relative;
+    width: 100%;
+    padding-right: calc(#{$gutter} / 2);
+    padding-left: calc(#{$gutter} / 2);
 }
 
-@mixin make-col($size, $columns: $grid-columns) {
-  flex: 0 0 percentage($size / $columns);
-  max-width: percentage($size / $columns);
+@mixin make-col($size, $columns: vars.$grid-columns) {
+    flex: 0 0 calc(#{$size} / #{$columns} * 100%);
+    max-width: calc(#{$size} / #{$columns} * 100%);
 }
 
 // Generate grid classes
-@mixin make-grid-columns($columns: $grid-columns, $breakpoints: $grid-breakpoints) {
-  @each $breakpoint in map-keys($breakpoints) {
-    $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+@mixin make-grid-columns($columns: vars.$grid-columns, $breakpoints: vars.$grid-breakpoints) {
+    @each $breakpoint in map.keys($breakpoints) {
+        $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
 
-    @include breakpoint-up($breakpoint, $breakpoints) {
-      .col#{$infix} {
-        flex-basis: 0;
-        flex-grow: 1;
-        max-width: 100%;
-      }
+        @include breakpoint-up($breakpoint, $breakpoints) {
+            .col#{$infix} {
+                flex-basis: 0;
+                flex-grow: 1;
+                max-width: 100%;
+            }
 
-      @for $i from 1 through $columns {
-        .col#{$infix}-#{$i} {
-          @include make-col-ready();
-          @include make-col($i, $columns);
+            @for $i from 1 through $columns {
+                .col#{$infix}-#{$i} {
+                    @include make-col-ready();
+                    @include make-col($i, $columns);
+                }
+            }
         }
-      }
     }
-  }
 }
 
 // Container
 .container {
-  @include make-container();
+    @include make-container();
 }
 
 .container-fluid {
-  @include make-container();
+    @include make-container();
 }
 
 // Responsive containers
-@each $breakpoint, $container-max-width in $container-max-widths {
-  .container-#{$breakpoint} {
-    @extend .container-fluid;
-  }
-
-  @include breakpoint-up($breakpoint, $grid-breakpoints) {
-    %responsive-container-#{$breakpoint} {
-      max-width: $container-max-width;
+@each $breakpoint, $container-max-width in vars.$container-max-widths {
+    .container-#{$breakpoint} {
+        @extend .container-fluid;
     }
 
-    @each $name, $width in $grid-breakpoints {
-      @if ($container-max-width > $width or $breakpoint == $name) {
-        .container#{if($name == xs, "", "-#{$name}")} {
-          @extend %responsive-container-#{$breakpoint};
+    @include breakpoint-up($breakpoint, vars.$grid-breakpoints) {
+        %responsive-container-#{$breakpoint} {
+            max-width: $container-max-width;
         }
-      }
+
+        @each $name, $width in vars.$grid-breakpoints {
+            @if ($container-max-width > $width or $breakpoint == $name) {
+                .container#{if($name == xs, "", "-#{$name}")} {
+                    @extend %responsive-container-#{$breakpoint};
+                }
+            }
+        }
     }
-  }
 }
 
 // Row
 .row {
-  @include make-row();
+    @include make-row();
 }
 
 // Columns
 [class^="col-"] {
-  @include make-col-ready();
+    @include make-col-ready();
 }
 
 @include make-grid-columns();
 
 // No gutters
 .no-gutters {
-  margin-right: 0;
-  margin-left: 0;
+    margin-right: 0;
+    margin-left: 0;
 
-  > .col,
-  > [class*="col-"] {
-    padding-right: 0;
-    padding-left: 0;
-  }
+    > .col,
+    > [class*="col-"] {
+        padding-right: 0;
+        padding-left: 0;
+    }
 }
